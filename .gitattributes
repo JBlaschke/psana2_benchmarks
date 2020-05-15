@@ -1,2 +1,4 @@
 static/mpich-3.3.2.tar.gz filter=lfs diff=lfs merge=lfs -text
 static/mpi4py-3.0.3.tar.gz filter=lfs diff=lfs merge=lfs -text
+data/xtc_test/data-r0001-s00.xtc2 filter=lfs diff=lfs merge=lfs -text
+data/xtc_test/smalldata filter=lfs diff=lfs merge=lfs -text
