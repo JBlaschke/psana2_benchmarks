@@ -1,0 +1,183 @@
+
+FROM ubuntu:18.04
+LABEL maintainer="Johannes Blaschke <jpblaschke@lbl.gov>"
+# adapted from Rollin Thomas <rcthomas@lbl.gov>
+# and Kelly Rowland <kellyrowland@lbl.gov>
+
+# Base Ubuntu packages
+
+ENV DEBIAN_FRONTEND noninteractive
+ENV LANG C.UTF-8
+
+RUN \
+    apt-get update          &&                                                 \
+    apt-get --yes upgrade   &&                                                 \
+    apt-get --yes install                                                      \
+        bzip2                                                                  \
+        curl                                                                   \
+        git                                                                    \
+        libffi-dev                                                             \
+        lsb-release                                                            \
+        tzdata                                                                 \
+        vim                                                                    \
+        wget                                                                   \
+        bash                                                                   \
+        autoconf                                                               \
+        automake                                                               \
+        gcc                                                                    \
+        g++                                                                    \
+        make                                                                   \
+        gfortran                                                               \
+        tar
+
+# Timezone to Berkeley
+
+ENV TZ=America/Los_Angeles
+RUN \
+    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime  &&  \
+    echo $TZ > /etc/timezone
+
+
+#-------------------------------------------------------------------------------
+# MPICH
+#
+# Currently shifter-based MPI functionality is only available for images where
+# MPICH is installed manually
+#
+
+RUN mkdir -p /img/static
+COPY static/mpich-*.tar.gz /img/static
+
+RUN mkdir -p /img/build/mpi
+RUN cd /img/build/mpi                                                       && \
+    source_name=$(find /img/static/ -maxdepth 1 -name "mpich*" -type f)     && \
+    tar -xvf $source_name                                                   && \
+    source_dir=$(find . -maxdepth 1 -name "mpich*" -type d)                 && \
+    cd $source_dir                                                          && \
+    ./configure                                                             && \
+    make -j && make install
+
+#-------------------------------------------------------------------------------
+
+
+# The /opt/ scripts require source => switch `RUN` to execute bash (instead sh)
+SHELL ["/bin/bash", "-c"]
+
+
+#-------------------------------------------------------------------------------
+# CONDA
+#
+# Build miniconda and MPI4PY (linking with manually-install MPICH library above)
+#
+
+RUN mkdir -p /img/static
+COPY static/mpi4py-*.tar.gz /img/static
+
+RUN mkdir /img/conda.local
+COPY conda.local /img/conda.local
+
+RUN cd /img/conda.local                                                     && \
+    . sites/default.sh                                                      && \
+    export STATIC_DIR=../../static                                          && \
+    ./install_conda.sh
+
+#-------------------------------------------------------------------------------
+
+
+#-------------------------------------------------------------------------------
+# CONDA BASE ENVIRONMENT
+#
+# Build the conda environment used by cctbx
+#
+
+RUN mkdir -p /img/opt/env
+
+# Copy only the env stuff => don't reinstall the whole conda environment every
+# time psana (lcls2) are updated
+COPY opt/env /img/opt/env
+
+RUN cd /img/opt/env                                                         && \
+    ./setup_env.sh
+
+#-------------------------------------------------------------------------------
+
+
+#-------------------------------------------------------------------------------
+# PSANA2
+#
+# Build PSANA2
+#
+
+RUN mkdir -p /img/opt
+COPY opt/lcls2 /img/opt/lcls2
+COPY opt/setup_lcls2.sh /img/opt/
+
+# Build psana2 only 
+RUN cd /img/opt/                                                            && \
+    ./setup_lcls2.sh
+
+
+COPY opt/mk_env.sh /img/opt/
+# Create a local env config script
+RUN cd /img/opt/                                                            && \
+    ./mk_env.sh
+
+#-------------------------------------------------------------------------------
+
+
+#-------------------------------------------------------------------------------
+# LDCONFIG
+#
+# We recommend running an /sbin/ldconfig as part of the image build (e.g. in
+# the Dockerfile) to update the cache after installing any new libraries in in
+# the image build.
+#
+
+RUN /sbin/ldconfig
+
+#-------------------------------------------------------------------------------
+
+
+#-------------------------------------------------------------------------------
+# TOOLS
+#
+
+RUN mkdir -p /img/opt
+COPY opt/tools /img/opt/tools
+
+#-------------------------------------------------------------------------------
+
+
+#-------------------------------------------------------------------------------
+# ENTRYPOINT
+#
+
+# build the /img/ dir
+RUN mkdir -p /img
+ADD docker/entrypoint.sh /img
+
+# copy the rest
+RUN mkdir -p /img/tests
+COPY tests /img/tests
+# copy test data sets
+RUN mkdir -p /img/data
+COPY data /img/data
+
+# link some common operatioins into the /img root
+RUN ln -s /img/tests/test_mpi4py.py /img/test_mpi4py.py
+RUN ln -s /img/opt/tools/get_calib.py /img/get_calib.py
+
+# jupyter helper
+COPY opt/launch_jupyter.sh /img/opt/launch_jupyter.sh
+RUN ln -s /img/opt/launch_jupyter.sh /img/launch_jupyter.sh
+
+
+# set workdir
+WORKDIR /img
+
+RUN chmod +x entrypoint.sh
+RUN chmod +x test_mpi4py.py
+
+ENTRYPOINT ["./entrypoint.sh"]
+
+#-------------------------------------------------------------------------------

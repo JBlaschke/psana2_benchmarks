@@ -1,0 +1,2 @@
+amityping=1.0.8=py_0
+krtc=0.1.2=py37_1

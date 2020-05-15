@@ -1,0 +1,6 @@
+[submodule "conda.local"]
+	path = conda.local
+	url = git@github.com:JBlaschke/conda.local.git
+[submodule "opt/lcls2"]
+	path = opt/lcls2
+	url = https://github.com/JBlaschke/lcls2.git
