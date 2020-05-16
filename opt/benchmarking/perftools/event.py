@@ -43,11 +43,15 @@ class Event(object):
 class EventLogger(object, metaclass=Singleton):
     
     def __init__(self):
-        self._events = list()
+        self.clear()
 
 
     def add(self, evt):
         self._events.append(evt)
+
+
+    def clear(self):
+        self._events = list()
 
 
     @property

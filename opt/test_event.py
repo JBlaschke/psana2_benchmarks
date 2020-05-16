@@ -9,14 +9,12 @@ from benchmarking import Event, EventLogger
 
 
 def log_timer(e1):
-    logger = EventLogger()
-    logger.add(e1)
+    EventLogger().add(e1)
 
 
 
 def log_inplace():
-    logger = EventLogger()
-    logger.add(Event())
+    EventLogger().add(Event())
 
 
 
@@ -31,6 +29,7 @@ def test_timers(n):
 
 
 def test_logger(n):
+    EventLogger().clear()
 
     e1 = Event()
     sleep(n)  # sleep for n seconds
@@ -40,6 +39,16 @@ def test_logger(n):
     log_timer(e2)
 
 
+
+def test_inplace_logger(n):
+    EventLogger().clear()
+
+    log_inplace()
+    sleep(n)  # sleep for n seconds
+    log_inplace()
+
+
+
 if __name__ == "__main__":
 
     e1, e2 = test_timers(1)
@@ -47,7 +56,13 @@ if __name__ == "__main__":
     print(f"e1 = {e1.timestamp}\ne2 = {e2.timestamp}")
 
     test_logger(1)
-    print("Testing event timers:")
+    print("Testing event logger:")
+    logger = EventLogger()
+    for i, ts in enumerate(logger.timestamps):
+        print(f"e{i+1} = {ts}")
+
+    test_inplace_logger(1)
+    print("Testing inplace event logger:")
     logger = EventLogger()
     for i, ts in enumerate(logger.timestamps):
         print(f"e{i+1} = {ts}")
