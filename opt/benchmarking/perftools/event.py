@@ -2,9 +2,11 @@
 # -*- coding: utf-8 -*-
 
 
-import math
-import time
+from math import floor
+from time import time, strftime, gmtime
 
+
+from ..util import Singleton
 
 
 class Event(object):
@@ -17,8 +19,8 @@ class Event(object):
     @staticmethod
     def _time():
 
-        t = time.time()
-        s = int(math.floor(t))
+        t = time()
+        s = int(floor(t))
         return (s, int(round((t - s) * 1000)))
 
 
@@ -26,4 +28,6 @@ class Event(object):
     def timestamp(self):
         
         s, t = self._t_evt
-        return time.strftime("%Y-%m-%dT%H:%MZ%S", time.gmtime(t)) + (".%03d" % s)
+        return strftime("%Y-%m-%dT%H:%MZ%S", gmtime(t)) + (".%03d" % s)
+
+
