@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 
 
-from math import floor
-from time import time, strftime, gmtime
+from socket import gethostname
+from math   import floor
+from time   import time, strftime, gmtime
 
 
 from ..util import Singleton
@@ -49,6 +50,7 @@ class EventLogger(object, metaclass=Singleton):
     
     def __init__(self):
         self.clear()
+        self._hostname = gethostname()
 
 
     def add(self, evt):
@@ -57,6 +59,11 @@ class EventLogger(object, metaclass=Singleton):
 
     def clear(self):
         self._events = list()
+
+
+    @property
+    def hostname(self):
+        return self._hostname
 
 
     @property
