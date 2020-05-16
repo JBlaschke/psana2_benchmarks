@@ -12,8 +12,9 @@ from ..util import Singleton
 class Event(object):
 
 
-    def __init__(self, accuracy=1000):
+    def __init__(self, label="", accuracy=1000):
 
+        self._label    = label
         self._accuracy = accuracy
         self._t_evt    = self._time(self._accuracy)
 
@@ -28,7 +29,6 @@ class Event(object):
 
     @property
     def accuracy(self):
-
         return self._accuracy
 
 
@@ -37,6 +37,11 @@ class Event(object):
         
         t, s = self._t_evt
         return strftime("%Y-%m-%dT%H:%MZ%S", gmtime(t)) + (".%03d" % s)
+
+
+    @property
+    def label(self):
+        return self._label
 
 
 
@@ -63,3 +68,13 @@ class EventLogger(object, metaclass=Singleton):
     def timestamps(self):
         for e in self.events:
             yield e.timestamp
+
+
+    @property
+    def labels(self):
+        for e in self.events:
+            yield e.label
+
+
+def event_here(label=""):
+    EventLogger().add(Event(label=label))
