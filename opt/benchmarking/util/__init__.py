@@ -3,3 +3,4 @@
 
 
 from .singleton import Singleton
+from .gears     import set_defaults
