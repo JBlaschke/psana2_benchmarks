@@ -28,7 +28,8 @@ class Event(object):
 
     @property
     def accuracy(self):
-        self._accuracy
+
+        return self._accuracy
 
 
     @property
@@ -38,6 +39,7 @@ class Event(object):
         return strftime("%Y-%m-%dT%H:%MZ%S", gmtime(t)) + (".%03d" % s)
 
 
+
 class EventLogger(object, metaclass=Singleton):
     
     def __init__(self):
@@ -45,7 +47,7 @@ class EventLogger(object, metaclass=Singleton):
 
 
     def add(self, evt):
-        self._events.add(evt)
+        self._events.append(evt)
 
 
     @property
