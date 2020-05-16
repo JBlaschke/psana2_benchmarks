@@ -4,7 +4,8 @@
 
 from time import sleep
 
-from benchmarking import Event, EventLogger, event_here
+from benchmarking import Event, EventLogger, event_here, start, stop, log,\
+                         event_log
 
 
 
@@ -33,13 +34,12 @@ def test_logger(n):
     log_timer(e2)
 
 
-
+@log
 def test_inplace_logger(n):
-    EventLogger().clear()
 
-    event_here(label="l 5")
+    start("sleep({n})")
     sleep(n)  # sleep for n seconds
-    event_here(label="l 6")
+    stop("sleep")
 
 
 
@@ -49,14 +49,24 @@ if __name__ == "__main__":
     print("Testing event timers:")
     print(f"e1 = {e1.label}@{e1.timestamp}\ne2 = {e2.label}@{e2.timestamp}")
 
+
+    # clear logger between tests
+    EventLogger().clear()
+
     test_logger(1)
     print("Testing event logger:")
     logger = EventLogger()
     for i, (l, ts) in enumerate(zip(logger.labels, logger.timestamps)):
         print(f"e{i+1} = {l}@{ts}")
 
+
+    # clear logger between tests
+    EventLogger().clear()
+
+    event_here("start", "    ")
     test_inplace_logger(1)
+    event_here("inplace_test", "done")
+
     print("Testing inplace event logger:")
-    logger = EventLogger()
-    for i, (l, ts) in enumerate(zip(logger.labels, logger.timestamps)):
-        print(f"e{i+1} = {l}@{ts}")
+    for entry in event_log():
+        print(f"{entry}")

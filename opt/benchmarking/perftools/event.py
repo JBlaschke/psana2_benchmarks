@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 
 
-from socket import gethostname
-from math   import floor
-from time   import time, strftime, gmtime
+from socket    import gethostname
+from functools import wraps
+from math      import floor
+from time      import time, strftime, gmtime
 
 
 from ..util import Singleton
@@ -35,7 +36,7 @@ class Event(object):
 
     @property
     def timestamp(self):
-        
+
         t, s = self._t_evt
         return strftime("%Y-%m-%dT%H:%MZ%S", gmtime(t)) + (".%03d" % s)
 
@@ -47,7 +48,7 @@ class Event(object):
 
 
 class EventLogger(object, metaclass=Singleton):
-    
+
     def __init__(self):
         self.clear()
         self._hostname = gethostname()
@@ -83,5 +84,47 @@ class EventLogger(object, metaclass=Singleton):
             yield e.label
 
 
-def event_here(label=""):
-    EventLogger().add(Event(label=label))
+
+#
+# Functions to operate on the singleton EventLogger
+#
+
+
+def event_here(label, status=None):
+
+    if status == None:
+        status = "    "
+
+    EventLogger().add(Event(label=status+","+label))
+
+
+
+def start(label):
+    event_here(label, status="beg ")
+
+
+
+def stop(label):
+    event_here(label, status="end ")
+
+
+
+def event_log():
+    hostname = EventLogger().hostname
+    for e in EventLogger().events:
+        yield f"{hostname},{e.timestamp},{e.label}"
+
+
+#
+# Decorator to log function calls
+#
+def log(func):
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        event_here(func.__name__, status="call")
+        ret = func(*args, **kwargs)
+        event_here(func.__name__, status="ret ")
+        return ret
+
+    return wrapper
