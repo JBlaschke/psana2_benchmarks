@@ -4,8 +4,8 @@
 
 from time import sleep
 
-from benchmarking import Event, EventLogger, event_here, start, stop, log,\
-                         event_log
+from benchmarking import Event, EventLogger,\
+                         event_here, start, stop, log, event_log
 
 
 
