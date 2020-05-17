@@ -3,12 +3,15 @@
 
 
 import os
+import socket
 import psana
 import numpy    as np
 from   argparse import ArgumentParser
 from   pickle   import dump
 
-from benchmarking import Event, event_here, start, stop, log, event_log
+from benchmarking import Event,\
+                         set_defaults,\
+                         event_here, start, stop, log, event_log
 
 
 
@@ -85,9 +88,7 @@ def env_dxtbx_from_slac_metrology(run, address):
     elif geometry.valid:
         metro_path = None
     else:
-        import socket
-        raise RuntimeError(f"Could not read geometry, hostname:
-                           {socket.gethostname()}")
+        raise RuntimeError(f"Could not read geometry, hostname: {socket.gethostname()}")
 
     if metro_path is None and geometry is None:
         return None
@@ -750,7 +751,7 @@ if __name__ == "__main__":
         print("MPI Initialize, Running bcast_dials_mask Benchmark")
 
     ds = psana.DataSource(**psana_kwargs)
-    test_xtc_read(ds, comm):
+    test_xtc_read(ds, comm)
 
 
     #

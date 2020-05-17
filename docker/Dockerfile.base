@@ -143,7 +143,9 @@ RUN /sbin/ldconfig
 #
 
 RUN mkdir -p /img/opt
-COPY opt/tools /img/opt/tools
+COPY opt/benchmarking /img/opt/benchmarking
+COPY opt/benchmark_dials_mask_bcast.py /img/opt/
+COPY opt/benchmark_xtc_read.py /img/opt/
 
 #-------------------------------------------------------------------------------
 
@@ -166,6 +168,13 @@ COPY data /img/data
 # link some common operatioins into the /img root
 RUN ln -s /img/tests/test_mpi4py.py /img/test_mpi4py.py
 RUN ln -s /img/opt/tools/get_calib.py /img/get_calib.py
+
+# link benchmarking scripts
+RUN ln -s /img/opt/benchmarking /img/benchmarking
+RUN ln -s /img/opt/benchmark_dials_mask_bcast.py /img/benchmark_dials_mask_bcast.py
+RUN ln -s /img/opt/benchmark_xtc_read.py /img/benchmark_xtc_read.py
+
+RUN mkdir -p /img/output
 
 # jupyter helper
 COPY opt/launch_jupyter.sh /img/opt/launch_jupyter.sh
