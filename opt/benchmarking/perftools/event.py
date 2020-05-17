@@ -93,7 +93,7 @@ class EventLogger(object, metaclass=Singleton):
 def event_here(label, status=None):
 
     if status == None:
-        status = "    "
+        status = " "*4  # Blank status => 4 spaces
 
     EventLogger().add(Event(label=status+","+label))
 
@@ -109,10 +109,18 @@ def stop(label):
 
 
 
-def event_log():
+def event_log(cctbx_fmt=False):
+
     hostname = EventLogger().hostname
-    for e in EventLogger().events:
-        yield f"{hostname},{e.timestamp},{e.label}"
+    psana_ts = " "*23  # CCTBX compatibility => Blank PSANA TS => 23 spaces
+
+    if cctbx_fmt == False:
+        for e in EventLogger().events:
+            yield f"{hostname},{e.timestamp},{e.label}"
+    else:
+        for e in EventLogger().events:
+            yield f"{hostname},{psana_ts},{e.timestamp},{e.label}"
+
 
 
 #
