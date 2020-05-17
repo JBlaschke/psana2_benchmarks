@@ -8,7 +8,17 @@ import numpy    as np
 from   argparse import ArgumentParser
 from   pickle   import dump
 
-from benchmarking import event_here, start, stop, log, event_log
+from benchmarking import Event, event_here, start, stop, log, event_log
+
+
+
+
+#
+# PSANA2 BENCHMARK, based on CCTBX's XTC_PROCESS pipeline.
+# COMMENT:  I've started with cctbx_project/xfel/xtc_process.py and stripped
+# out all the things that I don't think are relevant to this benchmark
+#
+
 
 
 
@@ -190,8 +200,9 @@ def get_psana_corrected_data(psana_det, evt, use_default=False, dark=True,
     return data
 
 
+
 @log
-def process_event(self, run, evt):
+def process_event(self, run, evt, psana_det):
     """
     Process a single event from a run
     @param run psana run object
@@ -212,124 +223,172 @@ def process_event(self, run, evt):
         sec  = time[0]
         nsec = time[1]
 
-    ts = cspad_tbx.evt_timestamp((sec,nsec/1e6))
-    if ts is None:
-        print("No timestamp, skipping shot")
-        return
 
-    if len(self.params_cache.debug.event_timestamp) > 0 and ts not in self.params_cache.debug.event_timestamp:
-        return
-    self.run = run
+    # HACK: get a the time-stamp corresponding to the psana event data out of
+    # the perftools event processor (instead of the cspad_tbx)
+    #  ts = cspad_tbx.evt_timestamp((sec,nsec/1e6))
+    evt       = Event()
+    evt.t_evt = (sec, nsec/1e6)
+    ts        = evt.timestamp
 
-    if self.params_cache.debug.skip_processed_events or self.params_cache.debug.skip_unprocessed_events or self.params_cache.debug.skip_bad_events:
-        if ts in self.known_events:
-            if self.known_events[ts] not in ["stop", "done", "fail"]:
-                if self.params_cache.debug.skip_bad_events:
-                    print("Skipping event %s: possibly caused an unknown exception previously"%ts)
-                    return
-            elif self.params_cache.debug.skip_processed_events:
-                print("Skipping event %s: processed successfully previously"%ts)
-                return
-        else:
-            if self.params_cache.debug.skip_unprocessed_events:
-                print("Skipping event %s: not processed previously"%ts)
-                return
+    
+    # COMMENT: I don't think ts can be NONE
+    # if ts is None:
+    #     print("No timestamp, skipping shot")
+    #     return
 
-    self.debug_start(ts)
 
-    # FIXME MONA: below will be replaced with filter() callback
-    if not PSANA2_VERSION:
-        if evt.get("skip_event") or "skip_event" in [key.key() for key in evt.keys()]:
-            print("Skipping event",ts)
-            self.debug_write("psana_skip", "skip")
-            return
+    # COMMENT: I don't think we need this either
+    # if len(self.params_cache.debug.event_timestamp) > 0
+    # and ts not in self.params_cache.debug.event_timestamp:
+    #     return
+    # self.run = run
+
+
+    # COMMENT: I don't think we need this for the benchmark
+    # if self.params_cache.debug.skip_processed_events or
+    # self.params_cache.debug.skip_unprocessed_events or
+    # self.params_cache.debug.skip_bad_events:
+    #     if ts in self.known_events:
+    #         if self.known_events[ts] not in ["stop", "done", "fail"]:
+    #             if self.params_cache.debug.skip_bad_events:
+    #                 print("Skipping event %s: possibly caused an unknown
+    #                       exception previously"%ts)
+    #                 return
+    #         elif self.params_cache.debug.skip_processed_events:
+    #             print("Skipping event %s: processed successfully previously"%ts)
+    #             return
+    #     else:
+    #         if self.params_cache.debug.skip_unprocessed_events:
+    #             print("Skipping event %s: not processed previously"%ts)
+    #             return
+
+    # self.debug_start(ts)
+
+    # HACK: this will never get called
+    # # FIXME MONA: below will be replaced with filter() callback
+    # if not PSANA2_VERSION:
+    #     if evt.get("skip_event") or "skip_event" in [key.key() for key in evt.keys()]:
+    #         print("Skipping event",ts)
+    #         self.debug_write("psana_skip", "skip")
+    #         return
 
     print("Accepted", ts)
-    self.params = copy.deepcopy(self.params_cache)
 
     # the data needs to have already been processed and put into the event by psana
-    if self.params.format.file_format == 'cbf':
-        if self.params.format.cbf.mode == "cspad":
-            # get numpy array, 32x185x388
-            data = cspad_cbf_tbx.get_psana_corrected_data(self.psana_det, evt, use_default=False, dark=True,
-                                                                                                    common_mode=self.common_mode,
-                                                                                                    apply_gain_mask=self.params.format.cbf.cspad.gain_mask_value is not None,
-                                                                                                    gain_mask_value=self.params.format.cbf.cspad.gain_mask_value,
-                                                                                                    per_pixel_gain=self.params.format.cbf.cspad.per_pixel_gain,
-                                                                                                    additional_gain_factor=self.params.format.cbf.cspad.additional_gain_factor)
-        elif self.params.format.cbf.mode == "rayonix":
-            data = rayonix_tbx.get_data_from_psana_event(evt, self.params.input.address)
-        if data is None:
-            print("No data")
-            self.debug_write("no_data", "skip")
-            return
+    # get numpy array, 32x185x388
 
-        if self.params.format.cbf.override_distance is None:
-            if self.params.format.cbf.mode == "cspad":
-                distance = cspad_tbx.env_distance(self.params.input.address, run.env(), self.params.format.cbf.detz_offset)
-            elif self.params.format.cbf.mode == "rayonix":
-                distance = self.params.format.cbf.detz_offset
-            if distance is None:
-                print("No distance, skipping shot")
-                self.debug_write("no_distance", "skip")
-                return
-        else:
-            distance = self.params.format.cbf.override_distance
+    # HACK: these parameters have been extracted from a xtc_process run
+    data = get_psana_corrected_data(psana_det, evt, use_default=False,
+                                    dark=True, common_mode=None,
+                                    apply_gain_mask=None, gain_mask_value=6.85,
+                                    per_pixel_gain=False,
+                                    additional_gain_factor=None)
 
-        if self.params.format.cbf.override_energy is None:
-            if PSANA2_VERSION:
-                wavelength = 12398.4187/self.psana_det.raw.photonEnergy(evt)
-            else:
-                wavelength = cspad_tbx.evt_wavelength(evt)
-            if wavelength is None:
-                print("No wavelength, skipping shot")
-                self.debug_write("no_wavelength", "skip")
-                return
-        else:
-            wavelength = 12398.4187/self.params.format.cbf.override_energy
 
-    if self.params.format.file_format == 'pickle':
-        image_dict = evt.get(self.params.format.pickle.out_key)
-        data = image_dict['DATA']
+    if data is None:
+        print("No data")
+        self.debug_write("no_data", "skip")
+        return
+
+
+    # HACK: Parameters extracted from a xtc_process run show that we don't
+    # enter this anyway, and I don't think that this contributes anything
+    # useful to the benchmark
+    # if self.params.format.cbf.override_distance is None:
+    #     if self.params.format.cbf.mode == "cspad":
+    #         distance = cspad_tbx.env_distance(self.params.input.address,
+    #                                           run.env(),
+    #                                           self.params.format.cbf.detz_offset)
+    #     elif self.params.format.cbf.mode == "rayonix":
+    #         distance = self.params.format.cbf.detz_offset
+    #     if distance is None:
+    #         print("No distance, skipping shot")
+    #         self.debug_write("no_distance", "skip")
+    #         return
+    # else:
+    #     distance = self.params.format.cbf.override_distance
+
+
+    # HACK: Parameters extracted from a xtc_process run show that we don't
+    # enter this. But TODO: we might want to add this anyway for benchmarking
+    # if self.params.format.cbf.override_energy is None:
+    #     if PSANA2_VERSION:
+    #         wavelength = 12398.4187/self.psana_det.raw.photonEnergy(evt)
+    #     else:
+    #         wavelength = cspad_tbx.evt_wavelength(evt)
+    #     if wavelength is None:
+    #         print("No wavelength, skipping shot")
+    #         self.debug_write("no_wavelength", "skip")
+    #         return
+    # else:
+    #     wavelength = 12398.4187/self.params.format.cbf.override_energy
+
 
     self.timestamp = timestamp = t = ts
     s = t[0:4] + t[5:7] + t[8:10] + t[11:13] + t[14:16] + t[17:19] + t[20:23]
     print("Processing shot", s)
 
-    def build_dxtbx_image():
-        if self.params.format.file_format == 'cbf':
-            # stitch together the header, data and metadata into the final dxtbx format object
-            if self.params.format.cbf.mode == "cspad":
-                dxtbx_img = cspad_cbf_tbx.format_object_from_data(self.base_dxtbx, data, distance, wavelength, timestamp, self.params.input.address, round_to_int=False)
-            elif self.params.format.cbf.mode == "rayonix":
-                dxtbx_img = rayonix_tbx.format_object_from_data(self.base_dxtbx, data, distance, wavelength, timestamp, self.params.input.address)
+    # def build_dxtbx_image():
+    #     if self.params.format.file_format == 'cbf':
+    #         # stitch together the header, data and metadata into the final
+    #         # dxtbx format object
+    #         if self.params.format.cbf.mode == "cspad":
+    #             dxtbx_img =
+    #             cspad_cbf_tbx.format_object_from_data(self.base_dxtbx, data,
+    #                                                   distance, wavelength,
+    #                                                   timestamp,
+    #                                                   self.params.input.address,
+    #                                                   round_to_int=False)
+    #         elif self.params.format.cbf.mode == "rayonix":
+    #             dxtbx_img =
+    #             rayonix_tbx.format_object_from_data(self.base_dxtbx, data,
+    #                                                 distance, wavelength,
+    #                                                 timestamp,
+    #                                                 self.params.input.address)
 
-            if self.params.input.reference_geometry is not None:
-                from dxtbx.model import Detector
-                # copy.deep_copy(self.reference_detctor) seems unsafe based on tests. Use from_dict(to_dict()) instead.
-                dxtbx_img._detector_instance = Detector.from_dict(self.reference_detector.to_dict())
-                if self.params.format.cbf.mode == "cspad":
-                    dxtbx_img.sync_detector_to_cbf() #FIXME need a rayonix version of this??
+    #         if self.params.input.reference_geometry is not None:
+    #             from dxtbx.model import Detector
+    #             # copy.deep_copy(self.reference_detctor) seems unsafe based on
+    #             # tests. Use from_dict(to_dict()) instead.
+    #             dxtbx_img._detector_instance =
+    #             Detector.from_dict(self.reference_detector.to_dict())
+    #             if self.params.format.cbf.mode == "cspad":
+    #                 dxtbx_img.sync_detector_to_cbf() #FIXME need a rayonix version of this??
 
-        elif self.params.format.file_format == 'pickle':
-            from dxtbx.format.FormatPYunspecifiedStill import FormatPYunspecifiedStillInMemory
-            dxtbx_img = FormatPYunspecifiedStillInMemory(image_dict)
-        return dxtbx_img
+    #     elif self.params.format.file_format == 'pickle':
+    #         from dxtbx.format.FormatPYunspecifiedStill import FormatPYunspecifiedStillInMemory
+    #         dxtbx_img = FormatPYunspecifiedStillInMemory(image_dict)
+    #     return dxtbx_img
 
-    dxtbx_img = build_dxtbx_image()
-    for correction in self.params.format.per_pixel_absorption_correction:
-        if correction.apply:
-            if correction.algorithm == "fuller_kapton":
-                from dials.algorithms.integration.kapton_correction import all_pixel_image_data_kapton_correction
-                data = all_pixel_image_data_kapton_correction(image_data=dxtbx_img, params=correction.fuller_kapton)()
-                dxtbx_img = build_dxtbx_image() # repeat as necessary to update the image pixel data and rebuild the image
+    # dxtbx_img = build_dxtbx_image()
 
-    self.tag = s # used when writing integration pickle
 
-    if self.params.dispatch.dump_all:
-        self.save_image(dxtbx_img, self.params, os.path.join(self.params.output.output_dir, "shot-" + s))
+    # HACK: this seems to be a post-processing step => not that helpful for a
+    # psana-only benchmark
+    # for correction in self.params.format.per_pixel_absorption_correction:
+    #     if correction.apply:
+    #         if correction.algorithm == "fuller_kapton":
+    #             from dials.algorithms.integration.kapton_correction import
+    #             all_pixel_image_data_kapton_correction
+    #             data =
+    #             all_pixel_image_data_kapton_correction(image_data=dxtbx_img,
+    #                                                    params=correction.fuller_kapton)()
+    #             dxtbx_img = build_dxtbx_image() # repeat as necessary to update the image pixel data and rebuild the image
 
-    self.cache_ranges(dxtbx_img, self.params.input.override_spotfinding_trusted_min, self.params.input.override_spotfinding_trusted_max)
+
+    # TODO: skipping for now, but since this is I/O, we maybe should include an
+    # image-output step in this benchmark
+    # if self.params.dispatch.dump_all:
+    #     self.save_image(dxtbx_img, self.params,
+    #                     os.path.join(self.params.output.output_dir, "shot-" +
+    #                                  s))
+
+
+    # HACK: skipping this because I have no idea what this does
+    # self.cache_ranges(dxtbx_img,
+    #                   self.params.input.override_spotfinding_trusted_min,
+    #                   self.params.input.override_spotfinding_trusted_max)
 
     from dxtbx.imageset import ImageSet, ImageSetData, MemReader
     imgset = ImageSet(ImageSetData(MemReader([dxtbx_img]), None))

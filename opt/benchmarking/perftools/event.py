@@ -30,6 +30,16 @@ class Event(object):
 
 
     @property
+    def t_evt(self):
+        return self._t_evt
+
+
+    @t_evt.setter
+    def t_evt(self, val):
+        self._t_evt = val
+
+
+    @property
     def accuracy(self):
         return self._accuracy
 
