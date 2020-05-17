@@ -202,7 +202,7 @@ def get_psana_corrected_data(psana_det, evt, use_default=False, dark=True,
 
 
 @log
-def process_event(self, run, evt, psana_det):
+def process_event(run, evt, psana_det):
     """
     Process a single event from a run
     @param run psana run object
@@ -675,7 +675,7 @@ def test_xtc_read(ds, comm):
         for evt in run.events():
             env_dxtbx_from_slac_metrology(run, params.input.address)
 
-            process_event(run, evt)
+            process_event(run, evt, det)
 
     ims.finalize()
 
@@ -718,7 +718,8 @@ if __name__ == "__main__":
     for arg in psana_args:
         parser.add_argument(f"--{arg}", help="psana.DataSource kwarg")
 
-    parser.add_argument("--of", help="Name of output file")
+    parser.add_argument("--of",
+                        help="Log dir -- every rank will write its own log file")
 
     # Get args dict, and sanitize None types
     args         = vars(parser.parse_args())
@@ -729,22 +730,37 @@ if __name__ == "__main__":
     psana_kwargs = set_defaults(args, default_parameters)
 
 
-    #
-    # Load calib data for all runs
-    #
-
-    print("Collecting calibration data from psana.DataSource for:")
-    print(f"{psana_kwargs}")
-
-    ds         = psana.DataSource(**psana_kwargs)
-    calib_data = get_calib_data(ds)
-
 
     #
-    # Save calib data as pickle
+    # Initialize MPI
     #
 
-    print(f"Writing output to: {output_name}")
+    start("INIT MPI")
+    from mpi4py import MPI
+    comm = MPI.COMM_WORLD
+    stop("INIT MPI")
 
-    with open(output_name, "wb") as f:
-        dump(calib_data, f)
+    rank = comm.Get_rank() # each process in MPI has a unique id, 0-indexed
+
+    #
+    # Run Benchmark
+    #
+
+    if rank == 0:
+        print("MPI Initialize, Running bcast_dials_mask Benchmark")
+
+    ds = psana.DataSource(**psana_kwargs)
+    test_xtc_read(ds, comm):
+
+
+    #
+    # Save log files
+    #
+
+    if rank == 0:
+        print("Writing logs")
+
+    log_path = os.path.join(output_name, f"debug_{rank}.txt")
+    with open(log_path, "w") as f:
+        for entry in event_log(cctbx_fmt=True):
+            print(entry, file=f)
