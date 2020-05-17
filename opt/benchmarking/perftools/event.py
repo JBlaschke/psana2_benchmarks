@@ -100,12 +100,12 @@ def event_here(label, status=None):
 
 
 def start(label):
-    event_here(label, status="beg ")
+    event_here(label, status="push")
 
 
 
 def stop(label):
-    event_here(label, status="end ")
+    event_here(label, status="pop ")
 
 
 
@@ -124,7 +124,7 @@ def log(func):
     def wrapper(*args, **kwargs):
         event_here(func.__name__, status="call")
         ret = func(*args, **kwargs)
-        event_here(func.__name__, status="ret ")
+        event_here(func.__name__, status="rtrn")
         return ret
 
     return wrapper
