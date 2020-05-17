@@ -96,6 +96,8 @@ if __name__ == "__main__":
 
     if rank == 0:
         print("Writing logs")
-    with open(output_name, "w") as f:
+
+    log_path = os.path.join(output_name, f"debug_{rank}.txt")
+    with open(log_path, "w") as f:
         for entry in event_log(cctbx_fmt=True):
             print(entry, file=f)
