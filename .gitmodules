@@ -4,3 +4,6 @@
 [submodule "opt/lcls2"]
 	path = opt/lcls2
 	url = https://github.com/JBlaschke/lcls2.git
+[submodule "run/psana-nersc"]
+	path = run/psana-nersc
+	url = https://github.com/JBlaschke/psana-nersc.git
