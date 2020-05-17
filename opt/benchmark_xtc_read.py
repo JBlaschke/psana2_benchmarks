@@ -329,6 +329,8 @@ def process_event(self, run, evt, psana_det):
     s = t[0:4] + t[5:7] + t[8:10] + t[11:13] + t[14:16] + t[17:19] + t[20:23]
     print("Processing shot", s)
 
+
+    # COMMENT: this denitely seems to be a post-processing function => skip here
     # def build_dxtbx_image():
     #     if self.params.format.file_format == 'cbf':
     #         # stitch together the header, data and metadata into the final
@@ -364,8 +366,8 @@ def process_event(self, run, evt, psana_det):
     # dxtbx_img = build_dxtbx_image()
 
 
-    # HACK: this seems to be a post-processing step => not that helpful for a
-    # psana-only benchmark
+    # COMMENT: this seems to be a post-processing step => not that helpful for
+    # a psana-only benchmark
     # for correction in self.params.format.per_pixel_absorption_correction:
     #     if correction.apply:
     #         if correction.algorithm == "fuller_kapton":
@@ -402,7 +404,8 @@ def process_event(self, run, evt, psana_det):
 
     # FIXME MONA: radial avg. is currently disabled
     if not PSANA2_VERSION:
-        # Two values from a radial average can be stored by mod_radial_average. If present, retrieve them here
+        # Two values from a radial average can be stored by mod_radial_average.
+        # If present, retrieve them here
         key_low = 'cctbx.xfel.radial_average.two_theta_low'
         key_high = 'cctbx.xfel.radial_average.two_theta_high'
         tt_low = evt.get(key_low)
@@ -427,29 +430,50 @@ def process_event(self, run, evt, psana_det):
 
     # before calling DIALS for processing, set output paths according to the templates
     if not self.params.output.composite_output:
-        if self.indexed_filename_template is not None and "%s" in self.indexed_filename_template:
-            self.params.output.indexed_filename = os.path.join(self.params.output.output_dir, self.indexed_filename_template%("idx-" + s))
+        if self.indexed_filename_template is not None and "%s" in
+        self.indexed_filename_template:
+            self.params.output.indexed_filename =
+            os.path.join(self.params.output.output_dir,
+                         self.indexed_filename_template%("idx-" + s))
         if "%s" in self.refined_experiments_filename_template:
-            self.params.output.refined_experiments_filename = os.path.join(self.params.output.output_dir, self.refined_experiments_filename_template%("idx-" + s))
+            self.params.output.refined_experiments_filename =
+            os.path.join(self.params.output.output_dir,
+                         self.refined_experiments_filename_template%("idx-" +
+                                                                     s))
         if "%s" in self.integrated_filename_template:
-            self.params.output.integrated_filename = os.path.join(self.params.output.output_dir, self.integrated_filename_template%("idx-" + s))
+            self.params.output.integrated_filename =
+            os.path.join(self.params.output.output_dir,
+                         self.integrated_filename_template%("idx-" + s))
         if "%s" in self.integrated_experiments_filename_template:
-            self.params.output.integrated_experiments_filename = os.path.join(self.params.output.output_dir, self.integrated_experiments_filename_template%("idx-" + s))
+            self.params.output.integrated_experiments_filename =
+            os.path.join(self.params.output.output_dir,
+                         self.integrated_experiments_filename_template%("idx-"
+                                                                        + s))
         if "%s" in self.coset_filename_template:
-            self.params.output.coset_filename = os.path.join(self.params.output.output_dir, self.coset_filename_template%("idx-" + s,
+            self.params.output.coset_filename =
+            os.path.join(self.params.output.output_dir,
+                         self.coset_filename_template%("idx-" + s,
                 self.params.integration.coset.transformation))
         if "%s" in self.coset_experiments_filename_template:
-            self.params.output.coset_experiments_filename = os.path.join(self.params.output.output_dir, self.coset_experiments_filename_template%("idx-" + s,
+            self.params.output.coset_experiments_filename =
+            os.path.join(self.params.output.output_dir,
+                         self.coset_experiments_filename_template%("idx-" + s,
                 self.params.integration.coset.transformation))
         if "%s" in self.reindexedstrong_filename_template:
-            self.params.output.reindexedstrong_filename = os.path.join(self.params.output.output_dir, self.reindexedstrong_filename_template%("idx-" + s))
+            self.params.output.reindexedstrong_filename =
+            os.path.join(self.params.output.output_dir,
+                         self.reindexedstrong_filename_template%("idx-" + s))
 
     if self.params.input.known_orientations_folder is not None:
-        expected_orientation_path = os.path.join(self.params.input.known_orientations_folder, os.path.basename(self.params.output.refined_experiments_filename))
+        expected_orientation_path =
+        os.path.join(self.params.input.known_orientations_folder,
+                     os.path.basename(self.params.output.refined_experiments_filename))
         if os.path.exists(expected_orientation_path):
             print("Known orientation found")
             from dxtbx.model.experiment_list import ExperimentListFactory
-            self.known_crystal_models = ExperimentListFactory.from_json_file(expected_orientation_path, check_format=False).crystals()
+            self.known_crystal_models =
+            ExperimentListFactory.from_json_file(expected_orientation_path,
+                                                 check_format=False).crystals()
         else:
             print("Image not previously indexed, skipping.")
             self.debug_write("not_previously_indexed", "stop")
@@ -464,7 +488,8 @@ def process_event(self, run, evt, psana_det):
     if self.spotfinder_mask is None:
         self.params.spotfinder.lookup.mask = mask
     else:
-        self.params.spotfinder.lookup.mask = tuple([a&b for a, b in zip(mask,self.spotfinder_mask)])
+        self.params.spotfinder.lookup.mask = tuple([a&b for a, b in
+                                                    zip(mask,self.spotfinder_mask)])
 
     self.debug_write("spotfind_start")
     try:
@@ -477,12 +502,14 @@ def process_event(self, run, evt, psana_det):
 
     print("Found %d bright spots"%len(observed))
 
-    if self.params.dispatch.hit_finder.enable and len(observed) < self.params.dispatch.hit_finder.minimum_number_of_reflections:
+    if self.params.dispatch.hit_finder.enable and len(observed) <
+    self.params.dispatch.hit_finder.minimum_number_of_reflections:
         print("Not enough spots to index")
         self.debug_write("not_enough_spots_%d"%len(observed), "stop")
         return
     if self.params.dispatch.hit_finder.maximum_number_of_reflections is not None:
-        if self.params.dispatch.hit_finder.enable and len(observed) > self.params.dispatch.hit_finder.maximum_number_of_reflections:
+        if self.params.dispatch.hit_finder.enable and len(observed) >
+        self.params.dispatch.hit_finder.maximum_number_of_reflections:
             print("Too many spots to index - Possibly junk")
             self.debug_write("too_many_spots_%d"%len(observed), "stop")
             return
@@ -491,7 +518,9 @@ def process_event(self, run, evt, psana_det):
 
     # save cbf file
     if self.params.dispatch.dump_strong:
-        self.save_image(dxtbx_img, self.params, os.path.join(self.params.output.output_dir, "hit-" + s))
+        self.save_image(dxtbx_img, self.params,
+                        os.path.join(self.params.output.output_dir, "hit-" +
+                                     s))
 
         # save strong reflections.  self.find_spots() would have done this, but we only
         # want to save data if it is enough to try and index it
@@ -526,9 +555,9 @@ def process_event(self, run, evt, psana_det):
     if self.params.dispatch.dump_indexed:
         img_path = self.save_image(dxtbx_img, self.params, os.path.join(self.params.output.output_dir, "idx-" + s))
         imgset = ExperimentListFactory.from_filenames([img_path]).imagesets()[0]
-        assert len(experiments.detectors()) == 1;       imgset.set_detector(experiments[0].detector)
-        assert len(experiments.beams()) == 1;               imgset.set_beam(experiments[0].beam)
-        assert len(experiments.scans()) <= 1;               imgset.set_scan(experiments[0].scan)
+        assert len(experiments.detectors()) == 1;   imgset.set_detector(experiments[0].detector)
+        assert len(experiments.beams()) == 1;       imgset.set_beam(experiments[0].beam)
+        assert len(experiments.scans()) <= 1;       imgset.set_scan(experiments[0].scan)
         assert len(experiments.goniometers()) <= 1; imgset.set_goniometer(experiments[0].goniometer)
         for expt_id, expt in enumerate(experiments):
             expt.imageset = imgset
@@ -559,7 +588,9 @@ def process_event(self, run, evt, psana_det):
 
     # integrate
     self.debug_write("integrate_start")
-    self.cache_ranges(dxtbx_img, self.params.input.override_integration_trusted_min, self.params.input.override_integration_trusted_max)
+    self.cache_ranges(dxtbx_img,
+                      self.params.input.override_integration_trusted_min,
+                      self.params.input.override_integration_trusted_max)
 
     if self.cached_ranges is not None:
         # Load a dials mask from the trusted range and psana mask
@@ -574,7 +605,8 @@ def process_event(self, run, evt, psana_det):
     if self.integration_mask is None:
         self.params.integration.lookup.mask = mask
     else:
-        self.params.integration.lookup.mask = tuple([a&b for a, b in zip(mask,self.integration_mask)])
+        self.params.integration.lookup.mask = tuple([a&b for a, b in
+                                                     zip(mask,self.integration_mask)])
 
     try:
         integrated = self.integrate(experiments, indexed)
