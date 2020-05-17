@@ -392,235 +392,267 @@ def process_event(self, run, evt, psana_det):
     #                   self.params.input.override_spotfinding_trusted_min,
     #                   self.params.input.override_spotfinding_trusted_max)
 
-    from dxtbx.imageset import ImageSet, ImageSetData, MemReader
-    imgset = ImageSet(ImageSetData(MemReader([dxtbx_img]), None))
-    imgset.set_beam(dxtbx_img.get_beam())
-    imgset.set_detector(dxtbx_img.get_detector())
 
-    if self.params.dispatch.estimate_gain_only:
-        from dials.command_line.estimate_gain import estimate_gain
-        estimate_gain(imgset)
-        return
+    # COMMENT: this seems to be a post-processing step => not that helpful for
+    # a psana-only benchmark
+    # from dxtbx.imageset import ImageSet, ImageSetData, MemReader
+    # imgset = ImageSet(ImageSetData(MemReader([dxtbx_img]), None))
+    # imgset.set_beam(dxtbx_img.get_beam())
+    # imgset.set_detector(dxtbx_img.get_detector())
 
-    # FIXME MONA: radial avg. is currently disabled
-    if not PSANA2_VERSION:
-        # Two values from a radial average can be stored by mod_radial_average.
-        # If present, retrieve them here
-        key_low = 'cctbx.xfel.radial_average.two_theta_low'
-        key_high = 'cctbx.xfel.radial_average.two_theta_high'
-        tt_low = evt.get(key_low)
-        tt_high = evt.get(key_high)
 
-    if self.params.radial_average.enable:
-        if tt_low is not None or tt_high is not None:
-            print("Warning, mod_radial_average is being used while also using xtc_process radial averaging. mod_radial_averaging results will not be logged to the database.")
+    # COMMENT: this seems to be a post-processing step => not that helpful for
+    # a psana-only benchmark
+    # if self.params.dispatch.estimate_gain_only:
+    #     from dials.command_line.estimate_gain import estimate_gain
+    #     estimate_gain(imgset)
+    #     return
 
-    from dxtbx.model.experiment_list import ExperimentListFactory
-    experiments = ExperimentListFactory.from_imageset_and_crystal(imgset, None)
+    # # FIXME MONA: radial avg. is currently disabled
+    # if not PSANA2_VERSION:
+    #     # Two values from a radial average can be stored by mod_radial_average.
+    #     # If present, retrieve them here
+    #     key_low = 'cctbx.xfel.radial_average.two_theta_low'
+    #     key_high = 'cctbx.xfel.radial_average.two_theta_high'
+    #     tt_low = evt.get(key_low)
+    #     tt_high = evt.get(key_high)
 
-    try:
-        self.pre_process(experiments)
-    except Exception as e:
-        self.debug_write("preprocess_exception", "fail")
-        return
+    # if self.params.radial_average.enable:
+    #     if tt_low is not None or tt_high is not None:
+    #         print("Warning, mod_radial_average is being used while also using xtc_process radial averaging. mod_radial_averaging results will not be logged to the database.")
 
-    if not self.params.dispatch.find_spots:
-        self.debug_write("data_loaded", "done")
-        return
 
+    # COMMENT: this seems to be a post-processing step => not that helpful for
+    # a psana-only benchmark
+    # from dxtbx.model.experiment_list import ExperimentListFactory
+    # experiments = ExperimentListFactory.from_imageset_and_crystal(imgset, None)
+
+    # try:
+    #     self.pre_process(experiments)
+    # except Exception as e:
+    #     self.debug_write("preprocess_exception", "fail")
+    #     return
+
+    # if not self.params.dispatch.find_spots:
+    #     self.debug_write("data_loaded", "done")
+    #     return
+
+
+    # COMMENT: this seems to be a post-processing step => not that helpful for
+    # a psana-only benchmark
     # before calling DIALS for processing, set output paths according to the templates
-    if not self.params.output.composite_output:
-        if self.indexed_filename_template is not None and "%s" in
-        self.indexed_filename_template:
-            self.params.output.indexed_filename =
-            os.path.join(self.params.output.output_dir,
-                         self.indexed_filename_template%("idx-" + s))
-        if "%s" in self.refined_experiments_filename_template:
-            self.params.output.refined_experiments_filename =
-            os.path.join(self.params.output.output_dir,
-                         self.refined_experiments_filename_template%("idx-" +
-                                                                     s))
-        if "%s" in self.integrated_filename_template:
-            self.params.output.integrated_filename =
-            os.path.join(self.params.output.output_dir,
-                         self.integrated_filename_template%("idx-" + s))
-        if "%s" in self.integrated_experiments_filename_template:
-            self.params.output.integrated_experiments_filename =
-            os.path.join(self.params.output.output_dir,
-                         self.integrated_experiments_filename_template%("idx-"
-                                                                        + s))
-        if "%s" in self.coset_filename_template:
-            self.params.output.coset_filename =
-            os.path.join(self.params.output.output_dir,
-                         self.coset_filename_template%("idx-" + s,
-                self.params.integration.coset.transformation))
-        if "%s" in self.coset_experiments_filename_template:
-            self.params.output.coset_experiments_filename =
-            os.path.join(self.params.output.output_dir,
-                         self.coset_experiments_filename_template%("idx-" + s,
-                self.params.integration.coset.transformation))
-        if "%s" in self.reindexedstrong_filename_template:
-            self.params.output.reindexedstrong_filename =
-            os.path.join(self.params.output.output_dir,
-                         self.reindexedstrong_filename_template%("idx-" + s))
+    # if not self.params.output.composite_output:
+    #     if self.indexed_filename_template is not None and "%s" in
+    #     self.indexed_filename_template:
+    #         self.params.output.indexed_filename =
+    #         os.path.join(self.params.output.output_dir,
+    #                      self.indexed_filename_template%("idx-" + s))
+    #     if "%s" in self.refined_experiments_filename_template:
+    #         self.params.output.refined_experiments_filename =
+    #         os.path.join(self.params.output.output_dir,
+    #                      self.refined_experiments_filename_template%("idx-" +
+    #                                                                  s))
+    #     if "%s" in self.integrated_filename_template:
+    #         self.params.output.integrated_filename =
+    #         os.path.join(self.params.output.output_dir,
+    #                      self.integrated_filename_template%("idx-" + s))
+    #     if "%s" in self.integrated_experiments_filename_template:
+    #         self.params.output.integrated_experiments_filename =
+    #         os.path.join(self.params.output.output_dir,
+    #                      self.integrated_experiments_filename_template%("idx-"
+    #                                                                     + s))
+    #     if "%s" in self.coset_filename_template:
+    #         self.params.output.coset_filename =
+    #         os.path.join(self.params.output.output_dir,
+    #                      self.coset_filename_template%("idx-" + s,
+    #             self.params.integration.coset.transformation))
+    #     if "%s" in self.coset_experiments_filename_template:
+    #         self.params.output.coset_experiments_filename =
+    #         os.path.join(self.params.output.output_dir,
+    #                      self.coset_experiments_filename_template%("idx-" + s,
+    #             self.params.integration.coset.transformation))
+    #     if "%s" in self.reindexedstrong_filename_template:
+    #         self.params.output.reindexedstrong_filename =
+    #         os.path.join(self.params.output.output_dir,
+    #                      self.reindexedstrong_filename_template%("idx-" + s))
 
-    if self.params.input.known_orientations_folder is not None:
-        expected_orientation_path =
-        os.path.join(self.params.input.known_orientations_folder,
-                     os.path.basename(self.params.output.refined_experiments_filename))
-        if os.path.exists(expected_orientation_path):
-            print("Known orientation found")
-            from dxtbx.model.experiment_list import ExperimentListFactory
-            self.known_crystal_models =
-            ExperimentListFactory.from_json_file(expected_orientation_path,
-                                                 check_format=False).crystals()
-        else:
-            print("Image not previously indexed, skipping.")
-            self.debug_write("not_previously_indexed", "stop")
-            return
 
+    # COMMENT: this seems to be a post-processing step => not that helpful for
+    # a psana-only benchmark
+    # if self.params.input.known_orientations_folder is not None:
+    #     expected_orientation_path =
+    #     os.path.join(self.params.input.known_orientations_folder,
+    #                  os.path.basename(self.params.output.refined_experiments_filename))
+    #     if os.path.exists(expected_orientation_path):
+    #         print("Known orientation found")
+    #         from dxtbx.model.experiment_list import ExperimentListFactory
+    #         self.known_crystal_models =
+    #         ExperimentListFactory.from_json_file(expected_orientation_path,
+    #                                              check_format=False).crystals()
+    #     else:
+    #         print("Image not previously indexed, skipping.")
+    #         self.debug_write("not_previously_indexed", "stop")
+    #         return
+
+
+    # COMMENT: this seems to be a post-processing step => not that helpful for
+    # a psana-only benchmark
     # Load a dials mask from the trusted range and psana mask
-    from dials.util.masking import MaskGenerator
-    generator = MaskGenerator(self.params.border_mask)
-    mask = generator.generate(imgset)
-    if self.params.format.file_format == "cbf" and self.dials_mask is not None:
-        mask = tuple([a&b for a, b in zip(mask,self.dials_mask)])
-    if self.spotfinder_mask is None:
-        self.params.spotfinder.lookup.mask = mask
-    else:
-        self.params.spotfinder.lookup.mask = tuple([a&b for a, b in
-                                                    zip(mask,self.spotfinder_mask)])
+    # from dials.util.masking import MaskGenerator
+    # generator = MaskGenerator(self.params.border_mask)
+    # mask = generator.generate(imgset)
+    # if self.params.format.file_format == "cbf" and self.dials_mask is not None:
+    #     mask = tuple([a&b for a, b in zip(mask,self.dials_mask)])
+    # if self.spotfinder_mask is None:
+    #     self.params.spotfinder.lookup.mask = mask
+    # else:
+    #     self.params.spotfinder.lookup.mask = tuple([a&b for a, b in
+    #                                                 zip(mask,self.spotfinder_mask)])
 
-    self.debug_write("spotfind_start")
-    try:
-        observed = self.find_spots(experiments)
-    except Exception as e:
-        import traceback; traceback.print_exc()
-        print(str(e), "event", timestamp)
-        self.debug_write("spotfinding_exception", "fail")
-        return
+    # self.debug_write("spotfind_start")
+    # try:
+    #     observed = self.find_spots(experiments)
+    # except Exception as e:
+    #     import traceback; traceback.print_exc()
+    #     print(str(e), "event", timestamp)
+    #     self.debug_write("spotfinding_exception", "fail")
+    #     return
 
-    print("Found %d bright spots"%len(observed))
+    # print("Found %d bright spots"%len(observed))
 
-    if self.params.dispatch.hit_finder.enable and len(observed) <
-    self.params.dispatch.hit_finder.minimum_number_of_reflections:
-        print("Not enough spots to index")
-        self.debug_write("not_enough_spots_%d"%len(observed), "stop")
-        return
-    if self.params.dispatch.hit_finder.maximum_number_of_reflections is not None:
-        if self.params.dispatch.hit_finder.enable and len(observed) >
-        self.params.dispatch.hit_finder.maximum_number_of_reflections:
-            print("Too many spots to index - Possibly junk")
-            self.debug_write("too_many_spots_%d"%len(observed), "stop")
-            return
+    # if self.params.dispatch.hit_finder.enable and len(observed) <
+    # self.params.dispatch.hit_finder.minimum_number_of_reflections:
+    #     print("Not enough spots to index")
+    #     self.debug_write("not_enough_spots_%d"%len(observed), "stop")
+    #     return
+    # if self.params.dispatch.hit_finder.maximum_number_of_reflections is not None:
+    #     if self.params.dispatch.hit_finder.enable and len(observed) >
+    #     self.params.dispatch.hit_finder.maximum_number_of_reflections:
+    #         print("Too many spots to index - Possibly junk")
+    #         self.debug_write("too_many_spots_%d"%len(observed), "stop")
+    #         return
 
-    self.restore_ranges(dxtbx_img)
+    
+    # HACK: No idea what this does
+    # self.restore_ranges(dxtbx_img)
 
+
+    # HACK: Parameters extracted from a xtc_process run show that we don't
+    # enter this. But TODO: we might want to add this anyway for benchmarking
     # save cbf file
-    if self.params.dispatch.dump_strong:
-        self.save_image(dxtbx_img, self.params,
-                        os.path.join(self.params.output.output_dir, "hit-" +
-                                     s))
+    # if self.params.dispatch.dump_strong:
+    #     self.save_image(dxtbx_img, self.params,
+    #                     os.path.join(self.params.output.output_dir, "hit-" +
+    #                                  s))
 
-        # save strong reflections.  self.find_spots() would have done this, but we only
-        # want to save data if it is enough to try and index it
-        if self.strong_filename_template:
-            if "%s" in self.strong_filename_template:
-                strong_filename = self.strong_filename_template%("hit-" + s)
-            else:
-                strong_filename = self.strong_filename_template
-            strong_filename = os.path.join(self.params.output.output_dir, strong_filename)
+    #     # save strong reflections.  self.find_spots() would have done this, but we only
+    #     # want to save data if it is enough to try and index it
+    #     if self.strong_filename_template:
+    #         if "%s" in self.strong_filename_template:
+    #             strong_filename = self.strong_filename_template%("hit-" + s)
+    #         else:
+    #             strong_filename = self.strong_filename_template
+    #         strong_filename = os.path.join(self.params.output.output_dir,
+    #                                        strong_filename)
 
-            from dials.util.command_line import Command
-            Command.start('Saving {0} reflections to {1}'.format(
-                    len(observed), os.path.basename(strong_filename)))
-            observed.as_pickle(strong_filename)
-            Command.end('Saved {0} observed to {1}'.format(
-                    len(observed), os.path.basename(strong_filename)))
+    #         from dials.util.command_line import Command
+    #         Command.start('Saving {0} reflections to {1}'.format(
+    #                 len(observed), os.path.basename(strong_filename)))
+    #         observed.as_pickle(strong_filename)
+    #         Command.end('Saved {0} observed to {1}'.format(
+    #                 len(observed), os.path.basename(strong_filename)))
 
-    if not self.params.dispatch.index:
-        self.debug_write("strong_shot_%d"%len(observed), "done")
-        return
 
-    # index and refine
-    self.debug_write("index_start")
-    try:
-        experiments, indexed = self.index(experiments, observed)
-    except Exception as e:
-        import traceback; traceback.print_exc()
-        print(str(e), "event", timestamp)
-        self.debug_write("indexing_failed_%d"%len(observed), "stop")
-        return
+    # COMMENT: this seems to be a post-processing step => not that helpful for
+    # a psana-only benchmark
+    # if not self.params.dispatch.index:
+    #     self.debug_write("strong_shot_%d"%len(observed), "done")
+    #     return
 
-    if self.params.dispatch.dump_indexed:
-        img_path = self.save_image(dxtbx_img, self.params, os.path.join(self.params.output.output_dir, "idx-" + s))
-        imgset = ExperimentListFactory.from_filenames([img_path]).imagesets()[0]
-        assert len(experiments.detectors()) == 1;   imgset.set_detector(experiments[0].detector)
-        assert len(experiments.beams()) == 1;       imgset.set_beam(experiments[0].beam)
-        assert len(experiments.scans()) <= 1;       imgset.set_scan(experiments[0].scan)
-        assert len(experiments.goniometers()) <= 1; imgset.set_goniometer(experiments[0].goniometer)
-        for expt_id, expt in enumerate(experiments):
-            expt.imageset = imgset
+    # # index and refine
+    # self.debug_write("index_start")
+    # try:
+    #     experiments, indexed = self.index(experiments, observed)
+    # except Exception as e:
+    #     import traceback; traceback.print_exc()
+    #     print(str(e), "event", timestamp)
+    #     self.debug_write("indexing_failed_%d"%len(observed), "stop")
+    #     return
 
-    self.debug_write("refine_start")
 
-    try:
-        experiments, indexed = self.refine(experiments, indexed)
-    except Exception as e:
-        import traceback; traceback.print_exc()
-        print(str(e), "event", timestamp)
-        self.debug_write("refine_failed_%d"%len(indexed), "fail")
-        return
+    # COMMENT: this seems to be a post-processing step => not that helpful for
+    # a psana-only benchmark
+    # if self.params.dispatch.dump_indexed:
+    #     img_path = self.save_image(dxtbx_img, self.params, os.path.join(self.params.output.output_dir, "idx-" + s))
+    #     imgset = ExperimentListFactory.from_filenames([img_path]).imagesets()[0]
+    #     assert len(experiments.detectors()) == 1;   imgset.set_detector(experiments[0].detector)
+    #     assert len(experiments.beams()) == 1;       imgset.set_beam(experiments[0].beam)
+    #     assert len(experiments.scans()) <= 1;       imgset.set_scan(experiments[0].scan)
+    #     assert len(experiments.goniometers()) <= 1; imgset.set_goniometer(experiments[0].goniometer)
+    #     for expt_id, expt in enumerate(experiments):
+    #         expt.imageset = imgset
 
-    if self.params.dispatch.reindex_strong:
-        self.debug_write("reindex_start")
-        try:
-            self.reindex_strong(experiments, observed)
-        except Exception as e:
-            import traceback; traceback.print_exc()
-            print(str(e), "event", timestamp)
-            self.debug_write("reindexstrong_failed_%d"%len(indexed), "fail")
-            return
+    # self.debug_write("refine_start")
 
-    if not self.params.dispatch.integrate:
-        self.debug_write("index_ok_%d"%len(indexed), "done")
-        return
+    # try:
+    #     experiments, indexed = self.refine(experiments, indexed)
+    # except Exception as e:
+    #     import traceback; traceback.print_exc()
+    #     print(str(e), "event", timestamp)
+    #     self.debug_write("refine_failed_%d"%len(indexed), "fail")
+    #     return
 
+    # if self.params.dispatch.reindex_strong:
+    #     self.debug_write("reindex_start")
+    #     try:
+    #         self.reindex_strong(experiments, observed)
+    #     except Exception as e:
+    #         import traceback; traceback.print_exc()
+    #         print(str(e), "event", timestamp)
+    #         self.debug_write("reindexstrong_failed_%d"%len(indexed), "fail")
+    #         return
+
+    # if not self.params.dispatch.integrate:
+    #     self.debug_write("index_ok_%d"%len(indexed), "done")
+    #     return
+
+
+    # HACK: skipping this because I have no idea what this does
     # integrate
-    self.debug_write("integrate_start")
-    self.cache_ranges(dxtbx_img,
-                      self.params.input.override_integration_trusted_min,
-                      self.params.input.override_integration_trusted_max)
+    # self.debug_write("integrate_start")
+    # self.cache_ranges(dxtbx_img,
+    #                   self.params.input.override_integration_trusted_min,
+    #                   self.params.input.override_integration_trusted_max)
 
-    if self.cached_ranges is not None:
-        # Load a dials mask from the trusted range and psana mask
-        imgset = ImageSet(ImageSetData(MemReader([dxtbx_img]), None))
-        imgset.set_beam(dxtbx_img.get_beam())
-        imgset.set_detector(dxtbx_img.get_detector())
-        from dials.util.masking import MaskGenerator
-        generator = MaskGenerator(self.params.border_mask)
-        mask = generator.generate(imgset)
-        if self.params.format.file_format == "cbf" and self.dials_mask is not None:
-            mask = tuple([a&b for a, b in zip(mask,self.dials_mask)])
-    if self.integration_mask is None:
-        self.params.integration.lookup.mask = mask
-    else:
-        self.params.integration.lookup.mask = tuple([a&b for a, b in
-                                                     zip(mask,self.integration_mask)])
+    # if self.cached_ranges is not None:
+    #     # Load a dials mask from the trusted range and psana mask
+    #     imgset = ImageSet(ImageSetData(MemReader([dxtbx_img]), None))
+    #     imgset.set_beam(dxtbx_img.get_beam())
+    #     imgset.set_detector(dxtbx_img.get_detector())
+    #     from dials.util.masking import MaskGenerator
+    #     generator = MaskGenerator(self.params.border_mask)
+    #     mask = generator.generate(imgset)
+    #     if self.params.format.file_format == "cbf" and self.dials_mask is not None:
+    #         mask = tuple([a&b for a, b in zip(mask,self.dials_mask)])
+    # if self.integration_mask is None:
+    #     self.params.integration.lookup.mask = mask
+    # else:
+    #     self.params.integration.lookup.mask = tuple([a&b for a, b in
+    #                                                  zip(mask,self.integration_mask)])
 
-    try:
-        integrated = self.integrate(experiments, indexed)
-    except Exception as e:
-        import traceback; traceback.print_exc()
-        print(str(e), "event", timestamp)
-        self.debug_write("integrate_failed_%d"%len(indexed), "fail")
-        return
-    self.restore_ranges(dxtbx_img)
+    # try:
+    #     integrated = self.integrate(experiments, indexed)
+    # except Exception as e:
+    #     import traceback; traceback.print_exc()
+    #     print(str(e), "event", timestamp)
+    #     self.debug_write("integrate_failed_%d"%len(indexed), "fail")
+    #     return
+
+
+    # HACK: skipping this because I have no idea what this does
+    # self.restore_ranges(dxtbx_img)
 
  
-
-
-
 
 @log
 def test_xtc_read(ds, comm):
