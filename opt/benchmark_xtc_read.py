@@ -347,7 +347,7 @@ if __name__ == "__main__":
     #
 
     if rank == 0:
-        print("MPI Initialize, Running xtc_read Benchmark")
+        print("MPI Initialized, Running xtc_read Benchmark")
 
     start(f"psana.DataSource({psana_kwargs})")
     ds = psana.DataSource(**psana_kwargs)
