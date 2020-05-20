@@ -133,21 +133,30 @@ def get_psana_corrected_data(psana_det, evt, use_default=False, dark=True,
     PSANA2_VERSION = True
 
 
+    start("psana_det.raw")
     if PSANA2_VERSION:
         # in psana2, data are stored as raw, fex, etc so the selection
         # has to be given here when the detector interface is used.
         # for now, assumes cctbx uses "raw".
         psana_det = psana_det.raw
+    stop("psana_det.raw")
 
 
     if use_default:
-        return psana_det.calib(evt)  # applies psana's complex run-dependent calibrations
+        start("psana_det.calib")
+        ret = psana_det.calib(evt)  # applies psana's complex run-dependent calibrations
+        stop("psana_det.calib")
+        return ret
 
 
+    start("psana_det.raw_data(evt)")
     data = psana_det.raw_data(evt)
+    stop("psana_det.raw_data(evt)")
     if data is None:
         return
 
+
+    start("subtract psana_det.pedestals()")
     data = data.astype(np.float64)
     if isinstance(dark, bool):
         if dark:
@@ -157,9 +166,13 @@ def get_psana_corrected_data(psana_det, evt, use_default=False, dark=True,
                 data -= psana_det.pedestals(evt)
     elif isinstance( dark, np.ndarray ):
         data -= dark
+    stop("subtract psana_det.pedestals()")
 
 
     if common_mode is not None and common_mode != "default":
+        print("Applying common mode")
+
+        start("psana_det.common_mode_apply(data, common_mode)")
         if common_mode == 'cspad_default':
             common_mode = (1,25,25,100,1)  # default parameters for CSPAD images
             psana_det.common_mode_apply(data, common_mode)
@@ -168,9 +181,15 @@ def get_psana_corrected_data(psana_det, evt, use_default=False, dark=True,
             psana_det.common_mode_apply(data, common_mode)
         else:  # this is how it was before.. Though I think common_mode would need to be a tuple..
             psana_det.common_mode_apply(data, common_mode)
-
+        stop("psana_det.common_mode_apply(data, common_mode)")
+    else:
+        print("Not applying common mode")
+    
 
     if apply_gain_mask:
+        print("Applying gain mask")
+
+        start("apply gain mask")
         if gain_mask is None:  # TODO: consider try/except here
             gain_mask = psana_det.gain_mask(evt) == 1
         if gain_mask_value is None:
@@ -180,10 +199,15 @@ def get_psana_corrected_data(psana_det, evt, use_default=False, dark=True,
                 print("No gain set for psana detector, using gain value of 1, consider disabling gain in your phil file")
                 gain_mask_value = 1
         data[gain_mask] = data[gain_mask]*gain_mask_value
+        stop("apply gain mask")
+    else:
+        print("Not applying gain mask")
 
 
     if per_pixel_gain: # TODO: test this
+        start("applying psana_det.gain()")
         data *= psana_det.gain()
+        stop("applying psana_det.gain()")
 
 
     if additional_gain_factor is not None:
@@ -206,7 +230,7 @@ def process_event(run, evt, psana_det):
     # HACK: Force psana v2 behaviour
     PSANA2_VERSION = True
 
-
+    start("construct event timestamp")
     if PSANA2_VERSION:
         sec  = evt._seconds
         nsec = evt._nanoseconds
@@ -216,8 +240,8 @@ def process_event(run, evt, psana_det):
         sec  = time[0]
         nsec = time[1]
 
-
     ts = Event.as_timestamp(sec, nsec/1e6)
+    stop("construct event timestamp")
 
     print("Accepted", ts)
 
@@ -230,8 +254,7 @@ def process_event(run, evt, psana_det):
 
 
     if data is None:
-        print("No data")
-        self.debug_write("no_data", "skip")
+        print("ERROR! No data")
         return
 
 
@@ -259,10 +282,12 @@ def test_xtc_read(ds, comm, det_name):
         #     dials_mask = None
         # dials_mask = comm.bcast(dials_mask, root=0)
 
+        start("for evt in run.events()")
         for evt in run.events():
             env_dxtbx_from_slac_metrology(run, det_name)
 
             process_event(run, evt, det)
+        stop("for evt in run.events()")
 
 
 
@@ -324,7 +349,10 @@ if __name__ == "__main__":
     if rank == 0:
         print("MPI Initialize, Running xtc_read Benchmark")
 
+    start(f"psana.DataSource({psana_kwargs})")
     ds = psana.DataSource(**psana_kwargs)
+    stop(f"psana.DataSource({psana_kwargs})")
+
     test_xtc_read(ds, comm, psana_kwargs["det_name"])
 
 
