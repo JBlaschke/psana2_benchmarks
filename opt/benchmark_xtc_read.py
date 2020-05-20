@@ -228,9 +228,10 @@ def process_event(run, evt, psana_det):
     # HACK: get a the time-stamp corresponding to the psana event data out of
     # the perftools event processor (instead of the cspad_tbx)
     #  ts = cspad_tbx.evt_timestamp((sec,nsec/1e6))
-    evt       = Event()
-    evt.t_evt = (sec, nsec/1e6)
-    ts        = evt.timestamp
+    ts = Event.as_timestamp(sec, nsec/1e6)
+    # evt       = Event()
+    # evt.t_evt = (sec, nsec/1e6)
+    # ts        = evt.timestamp
 
     
     # COMMENT: I don't think ts can be NONE
@@ -326,7 +327,7 @@ def process_event(run, evt, psana_det):
     #     wavelength = 12398.4187/self.params.format.cbf.override_energy
 
 
-    self.timestamp = timestamp = t = ts
+    timestamp = t = ts
     s = t[0:4] + t[5:7] + t[8:10] + t[11:13] + t[14:16] + t[17:19] + t[20:23]
     print("Processing shot", s)
 
@@ -656,7 +657,7 @@ def process_event(run, evt, psana_det):
  
 
 @log
-def test_xtc_read(ds, comm):
+def test_xtc_read(ds, comm, det_name):
 
     for run in ds.runs():
 
@@ -674,23 +675,10 @@ def test_xtc_read(ds, comm):
         # dials_mask = comm.bcast(dials_mask, root=0)
 
         for evt in run.events():
-            env_dxtbx_from_slac_metrology(run, params.input.address)
+            env_dxtbx_from_slac_metrology(run, det_name)
 
             process_event(run, evt, det)
 
-    ims.finalize()
-
-
-
-
-def get_calib_data(ds):
-
-    calib_data = list()
-    for run in ds.runs():
-        print(f"Getting Calibration for run: {run.runnum}")
-        calib_data.append(run.calibconst)
-
-    return calib_data
 
 
 
@@ -748,10 +736,10 @@ if __name__ == "__main__":
     #
 
     if rank == 0:
-        print("MPI Initialize, Running bcast_dials_mask Benchmark")
+        print("MPI Initialize, Running xtc_read Benchmark")
 
     ds = psana.DataSource(**psana_kwargs)
-    test_xtc_read(ds, comm)
+    test_xtc_read(ds, comm, psana_kwargs["det_name"])
 
 
     #
