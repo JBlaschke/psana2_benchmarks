@@ -18,15 +18,20 @@ class Event(object):
 
         self._label    = label
         self._accuracy = accuracy
-        self._t_evt    = self._time(self._accuracy)
+        self._t_evt    = self.time(self._accuracy)
 
 
     @staticmethod
-    def _time(accuracy):
+    def time(accuracy):
 
         t = time()
         s = int(floor(t))
         return (s, int(round((t - s) * accuracy)))
+
+
+    @staticmethod
+    def as_timestamp(t, s):
+        return strftime("%Y-%m-%dT%H:%MZ%S", gmtime(t)) + (".%03d" % s)
 
 
     @property
@@ -48,7 +53,7 @@ class Event(object):
     def timestamp(self):
 
         t, s = self._t_evt
-        return strftime("%Y-%m-%dT%H:%MZ%S", gmtime(t)) + (".%03d" % s)
+        return self.as_timestamp(t, s)
 
 
     @property
