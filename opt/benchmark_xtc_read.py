@@ -248,7 +248,7 @@ def process_event(run, evt, psana_det):
     # HACK: these parameters have been extracted from a xtc_process run
     data = get_psana_corrected_data(psana_det, evt, use_default=False,
                                     dark=True, common_mode=None,
-                                    apply_gain_mask=None, gain_mask_value=6.85,
+                                    apply_gain_mask=True, gain_mask_value=6.85,
                                     per_pixel_gain=False,
                                     additional_gain_factor=None)
 
