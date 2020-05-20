@@ -165,9 +165,8 @@ COPY tests /img/tests
 RUN mkdir -p /img/data
 COPY data /img/data
 
-# link some common operatioins into the /img root
+# link some common operations into the /img root
 RUN ln -s /img/tests/test_mpi4py.py /img/test_mpi4py.py
-RUN ln -s /img/opt/tools/get_calib.py /img/get_calib.py
 
 # link benchmarking scripts
 RUN ln -s /img/opt/benchmarking /img/benchmarking
